@@ -1,0 +1,98 @@
+LOGIN SCREEN
+	<login button>
+		POST /login
+			REQUEST DATA
+			{
+				email: <string>,
+				password: <string>,
+			}
+			RESPONSE DATA
+				SUCCESS (200)
+				{
+					authorization_token: <string>,
+					user: {
+						id: <int>
+						names: <string>,
+						email: <string>,
+					}
+				}
+				FAILUER (401)
+				{
+					error: {
+						message: "email and password does not match",
+					}
+				}
+		
+REGISTRATION SCREEN
+	<register button>
+		POST /register
+			REQUEST DATA
+			{
+				names: <string>,
+				email: <string>,
+				password: <string>,
+			}
+			RESPONSE DATA
+				SUCCESS (201)
+				{
+					id: <int>
+				}
+				FAILUER (209)
+				{
+					error: {
+						message: "email is not available",
+					}
+				}
+				
+PRODUCT-LIST SCREEN
+	<on page load>
+		GET /products
+			RESPONSE DATA
+				SUCCESS (200)
+				{
+					products: [
+						{
+							id: <int>,
+							name: <string>,
+							price: <float>,
+							desciption: <string>,
+						},
+						{
+							id: <int>,
+							name: <string>,
+							price: <float>,
+							desciption: <string>,
+						}
+					]
+				}
+				
+PRODUCT-LIST SCREEN
+	<on page load>
+		GET /products/<int>
+			RESPONSE DATA
+				SUCCESS (200)
+				{
+					id: <int>,
+					name: <string>,
+					price: <float>,
+					desciption: <string>,
+				},
+				FAILUER (401)
+				{
+					error: "not found"
+				}
+				
+	<add to cart button>
+		POST /cart-item
+			REQUEST DATA
+			{
+				item_id: <int>
+			}
+			RESPONSE DATA
+				SUCCESS (201)
+				
+	<remove from cart button>
+		DELETE /cart-item/<int(item-id)>
+			RESPONSE DATA
+				SUCCESS (204)
+				
