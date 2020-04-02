@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS order_history;
+DROP TABLE IF EXISTS cart_items;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS users;

@@ -5,6 +5,7 @@ users
 	password string(64)
 	
 products
+    id
 	name string(32)
 	price int
 	description string()
