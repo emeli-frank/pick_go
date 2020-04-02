@@ -1,0 +1,21 @@
+users
+	id int
+	names string(128)
+	email string(128)
+	password string(64)
+	
+products
+	name string(32)
+	price int
+	description string()
+	quantity int
+	
+carts
+	user_id int foreign to user.id
+	product_id int foreign to products.id
+	[unique contraint between user_id and product_id combintation]
+	
+order_histories
+	user_id foreign to user.id
+	product_id foreign to products.id
+	date_ordered date_time
