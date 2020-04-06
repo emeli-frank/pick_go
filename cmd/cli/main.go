@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -18,6 +19,7 @@ type application struct {
 func main() {
 	dsn := flag.String("dsn", "pick:pick@/pick?parseTime=true&multiStatements=true", "MySQL database connection info")
 	action := flag.String("action", "", "action")
+	scriptPath := flag.String("scriptPath", "./scripts", "Scripts path")
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
@@ -36,24 +38,26 @@ func main() {
 	}
 
 	switch *action {
-	case "seed-core":
-		if err := app.seedCore(); err != nil {
+	default :
+		fmt.Println("Creating tables and seeding core data")
+		if err := app.seedCore(*scriptPath); err != nil {
 			app.errorLog.Fatal()
 		}
-		/*case "seed-mock":
-		fmt.Println("creating mock data...")
-
-		checkErr(app.mock())
-
-		fmt.Println("mocking competed")*/
+		fmt.Println("Done!")
 	}
+
+	fmt.Println()
+	fmt.Println("Press any key to exit...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
 
-func (a application) seedCore() error {
+func (a application) seedCore(scriptPath string) error {
+	//scriptPath = "./pkg/storage/mysql/.db_setup"
+	//fmt.Println(fmt.Sprintf("%s/teardown.sql", scriptPath))
 	scriptPaths := []string{
-		"./pkg/storage/mysql/.db_setup/teardown.sql",
-		"./pkg/storage/mysql/.db_setup/tables.sql",
-		"./pkg/storage/mysql/.db_setup/data.sql",
+		fmt.Sprintf("%s/teardown.sql", scriptPath),
+		fmt.Sprintf("%s/tables.sql", scriptPath),
+		fmt.Sprintf("%s/data.sql", scriptPath),
 	}
 
 	err := database.ExecScripts(a.DB, scriptPaths...)
@@ -64,7 +68,7 @@ func (a application) seedCore() error {
 	return err
 }
 
-func (app *application) mock(db *sql.DB) error {
+func (a *application) mock(db *sql.DB) error {
 	var err error
 	err = database.ExecScripts(
 		db,
@@ -74,8 +78,6 @@ func (app *application) mock(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-
-
 
 	return nil
 }

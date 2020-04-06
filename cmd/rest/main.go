@@ -23,7 +23,6 @@ func main() {
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	_ = infoLog
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	db, err := database.OpenDB(*dsn)
@@ -43,7 +42,7 @@ func main() {
 	userRepo := mysql.NewUserStorage(db)
 	var userService = user.New(userRepo)
 
-	server := http2.NewServer(response, userService)
+	server := http2.NewServer(response, userService, infoLog)
 
 	srv := &http.Server{
 		Addr: *addr,
@@ -54,7 +53,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	fmt.Printf("Server is now running at %s\n", *addr)
+	fmt.Printf("Server is now running at localhost%s\n", *addr)
 	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/emeli-frank/pick_go/pkg/domain/user"
 	errors2 "github.com/emeli-frank/pick_go/pkg/errors"
 	"github.com/emeli-frank/pick_go/pkg/forms/validation"
+	"log"
 	"net/http"
 )
 
@@ -36,13 +37,15 @@ func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 type server struct {
 	response *response
 	userService user.Service
+	infoLog *log.Logger
 }
 
-func NewServer(response *response, userService user.Service) *server {
+func NewServer(response *response, userService user.Service, infoLog *log.Logger) *server {
 
 	return &server{
 		response: response,
 		userService: userService,
+		infoLog: infoLog,
 	}
 }
 

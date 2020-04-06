@@ -48,7 +48,7 @@ func (s server) checkJWT(next http.Handler) http.Handler {
 			// todo:: add this commented part to the part that fails when no valid jwt is provided
 			/*log.ClientError(w, http.StatusForbidden, []string{"bad authorization blah blah ..."})
 			return*/
-			fmt.Println("invalid token")
+			//fmt.Println("invalid token")
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -94,10 +94,22 @@ func (s server) authenticatedOnly(next http.Handler) http.Handler {
 		u, ok := r.Context().Value(user.ContextKeyUser).(*user.User)
 		if  !ok {
 			w.WriteHeader(http.StatusUnauthorized)
+			//fmt.Println("Unauthorized request")
 			return
 		}
 
-		fmt.Println(">>>>>>>>>>>", u, "<<<<<<<<<<<<<<<<")
+		_ = u
+
+		//fmt.Println("Authenticated user:", u,)
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (s server) logRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.infoLog.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL)
+
+		next.ServeHTTP(w, r)
+	})
+
 }

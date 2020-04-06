@@ -8,7 +8,7 @@ import (
 )
 
 func (s server) Routes() http.Handler {
-	standardMiddleWare := alice.New(s.recoverPanic)
+	standardMiddleWare := alice.New(s.recoverPanic, s.logRequest)
 	fooMiddleWare := alice.New(s.checkJWT, s.authenticatedOnly)
 
 	r := mux.NewRouter()
@@ -27,8 +27,9 @@ func (s server) Routes() http.Handler {
 		Methods("DELETE")*/
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:4200"}, // todo:: adjust before production
+		AllowedOrigins: []string{"*"}, // todo:: adjust before production
 		AllowedMethods: []string{"GET", "POST", "DELETE", "PUT"},
+		AllowedHeaders: []string{"*"},
 	})
 	return c.Handler(standardMiddleWare.Then(r))
 	//return cors.Default().Handler(globalMiddleware.Then(r))

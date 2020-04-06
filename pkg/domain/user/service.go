@@ -102,7 +102,7 @@ func (s *service) Authenticate(email string, password string) (*User, string, er
 		jwt.StandardClaims
 	}
 
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(120 * time.Minute)
 	c := &claims{
 		User:           User{ID: user.ID, Email: email},
 		StandardClaims: jwt.StandardClaims{
