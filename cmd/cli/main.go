@@ -61,7 +61,7 @@ func main() {
 }
 
 func (a application) seedCore(scriptPath string) error {
-	scriptPath = "./pkg/storage/mysql/.db_setup"
+	//scriptPath = "./pkg/storage/mysql/.db_setup"
 	scriptPaths := []string{
 		fmt.Sprintf("%s/teardown.sql", scriptPath),
 		fmt.Sprintf("%s/tables.sql", scriptPath),
