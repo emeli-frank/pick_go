@@ -14,7 +14,6 @@ func (s server) Routes() http.Handler {
 
 	r := mux.NewRouter()
 
-
 	r.HandleFunc("/api/register", s.registerHandler).Methods("POST")
 	r.HandleFunc("/api/login", s.loginHandler).Methods("POST")
 	r.Handle("/api/user",
@@ -23,15 +22,13 @@ func (s server) Routes() http.Handler {
 	r.HandleFunc("/api/products", s.productListHandler)
 	r.Handle("/api/products/{id}", checkJWTMiddleWare.Then(http.HandlerFunc(s.productDetailHandler)))
 
+	r.Handle("/api/cart-items", fooMiddleWare.Then(http.HandlerFunc(s.saveProductToCartHandler))).
+		Methods("POST")
 	r.Handle("/api/cart-items", fooMiddleWare.Then(http.HandlerFunc(s.cartItemsHandler)))
-	r.Handle("/api/order-history", fooMiddleWare.Then(http.HandlerFunc(s.orderHistoryHandler)))
 
-	/*r.Handle(
-		"/api/confirmation-token",
-		fooMiddleWare.Then(http.HandlerFunc(s.createEmailTokenConfirmationHandler)),
-	).Methods("POST")
-	r.HandleFunc("/api/confirmation-token/{token}", s.emailConfirmationTokenHandler).
-		Methods("DELETE")*/
+	r.Handle("/api/order-history", fooMiddleWare.Then(http.HandlerFunc(s.saveToOrderHistoryHandler))).
+		Methods("POST")
+	r.Handle("/api/order-history", fooMiddleWare.Then(http.HandlerFunc(s.orderHistoryHandler)))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"}, // todo:: adjust before production

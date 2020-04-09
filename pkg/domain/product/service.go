@@ -1,6 +1,9 @@
 package product
 
-import "github.com/emeli-frank/pick_go/pkg/errors"
+import (
+	"github.com/emeli-frank/pick_go/pkg/errors"
+	"time"
+)
 
 type repository interface {
 	SaveProduct(product *Product) (int, error)
@@ -8,6 +11,9 @@ type repository interface {
 	GetProduct(productId int, userId int) (product *Product, inCart bool, err error)
 	GetCartItems(userId int) ([]*Product, error)
 	GetOrderProducts(userId int) ([]*Product, error)
+
+	SaveProductToCart(userId int, productId int) error
+	SaveToOrderHistory(userId int, productId int, time time.Time) error
 }
 
 func New(repo repository) *service {
@@ -64,6 +70,17 @@ func (s *service) GetCartItems(userId int) ([]*Product, error) {
 	return pp, nil
 }
 
+func (s *service) SaveProductToCart(userId int, productId int) error {
+	const op = "productService.SaveProductToCart"
+
+	err := s.r.SaveProductToCart(userId, productId)
+	if err != nil {
+		return errors.Wrap(err, op, "calling repo to save products")
+	}
+
+	return nil
+}
+
 func (s *service) GetOrderProducts(userId int) ([]*Product, error) {
 	const op = "productService.GetOrderProducts"
 
@@ -73,4 +90,15 @@ func (s *service) GetOrderProducts(userId int) ([]*Product, error) {
 	}
 
 	return pp, nil
+}
+
+func (s *service) SaveToOrderHistory(userId int, productId int, time time.Time) error {
+	const op = "productService.SaveProductToCart"
+
+	err := s.r.SaveToOrderHistory(userId, productId, time)
+	if err != nil {
+		return errors.Wrap(err, op, "calling repo to save products")
+	}
+
+	return nil
 }

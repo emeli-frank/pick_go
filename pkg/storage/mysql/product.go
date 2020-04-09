@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/emeli-frank/pick_go/pkg/domain/product"
 	errors2 "github.com/emeli-frank/pick_go/pkg/errors"
+	"github.com/go-sql-driver/mysql"
+	"time"
 )
 
 type productStorage struct {
@@ -21,8 +23,6 @@ func ListProducts() {
 
 func (r *productStorage) SaveProduct(product *product.Product) (int, error) {
 	const op = "productStorage.SaveProduct"
-
-	fmt.Println(product)
 
 	query := `INSERT INTO products (name, description, quantity, regular_price, discount_price) 
 		VALUE (?, ?, ?, ?, ?)`
@@ -146,6 +146,29 @@ func (r *productStorage) GetCartItems(userId int) ([]*product.Product, error) {
 	return pp, nil
 }
 
+func (r *productStorage) SaveProductToCart(userId int, productId int) error {
+	const op = "productStorage.SaveProductToCart"
+
+	query := `INSERT INTO cart_items (user_id, product_id) VALUE (?, ?)`
+	result, err := r.DB.Exec(query, userId, productId)
+	if err != nil {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+			if mysqlErr.Number == 1062 {
+				err := &errors2.Conflict{Err:err}
+				return errors2.Wrap(err, op, "executing insert query")
+			}
+		}
+		return errors2.Wrap(err, op, "inserting products")
+	}
+
+	_, err = result.LastInsertId()
+	if err != nil {
+		return errors2.Wrap(err, op, "getting last insert id")
+	}
+
+	return nil
+}
+
 func (r *productStorage) GetOrderProducts(userId int) ([]*product.Product, error) {
 	const op = "productStorage.GetCartItems"
 
@@ -178,4 +201,27 @@ func (r *productStorage) GetOrderProducts(userId int) ([]*product.Product, error
 	}
 
 	return pp, nil
+}
+
+func (r *productStorage) SaveToOrderHistory(userId int, productId int, time time.Time) error {
+	const op = "productStorage.SaveProductToCart"
+
+	query := `INSERT INTO order_history (user_id, product_id, time_ordered) VALUE (?, ?, ?)`
+	result, err := r.DB.Exec(query, userId, productId, time)
+	if err != nil {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+			if mysqlErr.Number == 1062 {
+				err := &errors2.Conflict{Err:err}
+				return errors2.Wrap(err, op, "executing insert query")
+			}
+		}
+		return errors2.Wrap(err, op, "inserting products")
+	}
+
+	_, err = result.LastInsertId()
+	if err != nil {
+		return errors2.Wrap(err, op, "getting last insert id")
+	}
+
+	return nil
 }

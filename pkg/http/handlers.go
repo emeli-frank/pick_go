@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
@@ -297,6 +298,43 @@ func (s server) cartItemsHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(pp)
 }
 
+func (s server) saveProductToCartHandler(w http.ResponseWriter, r *http.Request) {
+	op := "server.saveProductToCartHandler"
+	data := struct {
+		ProductId int `json:"product_id"`
+	}{}
+
+	err := decodeJSONBody(w, r, &data)
+	if err != nil {
+		err = errors2.WrapWithMsg(err, op, "", "error decoding request body")
+		s.response.ClientError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	u, ok := r.Context().Value(user.ContextKeyUser).(*user.User)
+	if  !ok {
+		s.response.ServerError(w, errors2.Wrap(errors.New(""), op, "getting user object from request context"))
+		return
+	}
+
+	err = s.productService.SaveProductToCart(u.ID, data.ProductId)
+	if err != nil {
+		err = errors2.Wrap(err, op, "getting user and auth token from userService")
+		switch errors2.Unwrap(err).(type) {
+		case *errors2.Conflict:
+			err = errors2.SetMessage(err, "duplicate entry")
+			s.response.ClientError(w, http.StatusConflict, err)
+			return
+		default:
+			s.response.ServerError(w, err)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+}
+
 func (s server) orderHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	const op = "server.orderHistoryHandler"
 
@@ -315,4 +353,41 @@ func (s server) orderHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(pp)
+}
+
+func (s server) saveToOrderHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	op := "server.saveProductToCartHandler"
+	data := struct {
+		ProductId int `json:"product_id"`
+	}{}
+
+	err := decodeJSONBody(w, r, &data)
+	if err != nil {
+		err = errors2.WrapWithMsg(err, op, "", "error decoding request body")
+		s.response.ClientError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	u, ok := r.Context().Value(user.ContextKeyUser).(*user.User)
+	if  !ok {
+		s.response.ServerError(w, errors2.Wrap(errors.New(""), op, "getting user object from request context"))
+		return
+	}
+
+	err = s.productService.SaveToOrderHistory(u.ID, data.ProductId, time.Now())
+	if err != nil {
+		err = errors2.Wrap(err, op, "getting user and auth token from userService")
+		switch errors2.Unwrap(err).(type) {
+		case *errors2.Conflict:
+			err = errors2.SetMessage(err, "duplicate entry")
+			s.response.ClientError(w, http.StatusConflict, err)
+			return
+		default:
+			s.response.ServerError(w, err)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 }

@@ -1,5 +1,7 @@
 package product
 
+import "time"
+
 type Product struct {
 	ID int `json:"id"`
 	Name string `json:"name"`
@@ -15,5 +17,7 @@ type Service interface {
 	GetProduct(productId int, userId int) (product *Product, inCart bool, err error)
 	GetCartItems(userId int) ([]*Product, error)
 	GetOrderProducts(userId int) ([]*Product, error)
+	SaveProductToCart(userId int, productId int) error
+	SaveToOrderHistory(userId int, productId int, time time.Time) error
 }
 
