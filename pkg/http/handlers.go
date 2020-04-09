@@ -335,6 +335,35 @@ func (s server) saveProductToCartHandler(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusCreated)
 }
 
+func (s server) deleteProductFromCartHandler(w http.ResponseWriter, r *http.Request) {
+	op := "server.removeProductFromCartHandler"
+	data := struct {
+		ProductId int `json:"product_id"`
+	}{}
+
+	err := decodeJSONBody(w, r, &data)
+	if err != nil {
+		err = errors2.WrapWithMsg(err, op, "", "error decoding request body")
+		s.response.ClientError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	u, ok := r.Context().Value(user.ContextKeyUser).(*user.User)
+	if  !ok {
+		s.response.ServerError(w, errors2.Wrap(errors.New(""), op, "getting user object from request context"))
+		return
+	}
+
+	err = s.productService.DeleteProductFromCart(u.ID, data.ProductId)
+	if err != nil {
+		s.response.ServerError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+}
+
 func (s server) orderHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	const op = "server.orderHistoryHandler"
 

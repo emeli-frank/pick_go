@@ -169,6 +169,26 @@ func (r *productStorage) SaveProductToCart(userId int, productId int) error {
 	return nil
 }
 
+func (r *productStorage) DeleteProductFromCart(userId int, productId int) error {
+	const op = "productStorage.DeleteProductFromCart"
+
+	query := `DELETE FROM cart_items WHERE user_id = ? AND product_id = ?`
+	result, err := r.DB.Exec(query, userId, productId)
+	if err != nil {
+		return errors2.Wrap(err, op, "inserting products")
+	}
+
+	_, err = result.RowsAffected()
+	if err != nil {
+		return errors2.Wrap(err, op, "getting no. of rows affected")
+	} /*else if affected < 1 {
+		return errors2.Wrap(errors.New("row affected is less than 1"),
+			op, "row affected is less than 1")
+	}*/
+
+	return nil
+}
+
 func (r *productStorage) GetOrderProducts(userId int) ([]*product.Product, error) {
 	const op = "productStorage.GetCartItems"
 

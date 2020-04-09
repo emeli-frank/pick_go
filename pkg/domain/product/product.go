@@ -19,5 +19,6 @@ type Service interface {
 	GetOrderProducts(userId int) ([]*Product, error)
 	SaveProductToCart(userId int, productId int) error
 	SaveToOrderHistory(userId int, productId int, time time.Time) error
+	DeleteProductFromCart(userId int, productId int) error
 }
 

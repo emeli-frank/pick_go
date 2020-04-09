@@ -14,6 +14,8 @@ type repository interface {
 
 	SaveProductToCart(userId int, productId int) error
 	SaveToOrderHistory(userId int, productId int, time time.Time) error
+
+	DeleteProductFromCart(userId int, productId int) error
 }
 
 func New(repo repository) *service {
@@ -98,6 +100,17 @@ func (s *service) SaveToOrderHistory(userId int, productId int, time time.Time) 
 	err := s.r.SaveToOrderHistory(userId, productId, time)
 	if err != nil {
 		return errors.Wrap(err, op, "calling repo to save products")
+	}
+
+	return nil
+}
+
+func (s *service) DeleteProductFromCart(userId int, productId int) error {
+	const op = "DeleteProductFromCart.SaveProductToCart"
+
+	err := s.r.DeleteProductFromCart(userId, productId)
+	if err != nil {
+		return errors.Wrap(err, op, "deleting product from repo")
 	}
 
 	return nil
