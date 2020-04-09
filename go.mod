@@ -9,5 +9,5 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/rs/cors v1.7.0
 	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
-	syreclabs.com/go/faker v1.2.2 // indirect
+	syreclabs.com/go/faker v1.2.2
 )

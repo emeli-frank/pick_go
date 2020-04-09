@@ -10,6 +10,7 @@ import (
 func (s server) Routes() http.Handler {
 	standardMiddleWare := alice.New(s.recoverPanic, s.logRequest)
 	fooMiddleWare := alice.New(s.checkJWT, s.authenticatedOnly)
+	checkJWTMiddleWare := alice.New(s.checkJWT)
 
 	r := mux.NewRouter()
 
@@ -18,6 +19,12 @@ func (s server) Routes() http.Handler {
 	r.HandleFunc("/api/login", s.loginHandler).Methods("POST")
 	r.Handle("/api/user",
 		fooMiddleWare.Then(http.HandlerFunc(s.userHandler)))
+
+	r.HandleFunc("/api/products", s.productListHandler)
+	r.Handle("/api/products/{id}", checkJWTMiddleWare.Then(http.HandlerFunc(s.productDetailHandler)))
+
+	r.Handle("/api/cart-items", fooMiddleWare.Then(http.HandlerFunc(s.cartItemsHandler)))
+	r.Handle("/api/order-history", fooMiddleWare.Then(http.HandlerFunc(s.orderHistoryHandler)))
 
 	/*r.Handle(
 		"/api/confirmation-token",

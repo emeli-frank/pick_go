@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/emeli-frank/pick_go/pkg/domain/product"
 	"github.com/emeli-frank/pick_go/pkg/domain/user"
 	errors2 "github.com/emeli-frank/pick_go/pkg/errors"
 	"github.com/emeli-frank/pick_go/pkg/forms/validation"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
@@ -38,14 +41,16 @@ type server struct {
 	response *response
 	userService user.Service
 	infoLog *log.Logger
+	productService product.Service
 }
 
-func NewServer(response *response, userService user.Service, infoLog *log.Logger) *server {
+func NewServer(response *response, userService user.Service, productService product.Service, infoLog *log.Logger) *server {
 
 	return &server{
 		response: response,
 		userService: userService,
 		infoLog: infoLog,
+		productService: productService,
 	}
 }
 
@@ -173,4 +178,141 @@ func (s server) userHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(clientOutput)
+}
+
+func (s server) productListHandler(w http.ResponseWriter, r *http.Request) {
+	const op = "server.productListHandler"
+
+	page, err := urlParamToInt(r, "page")
+	if err != nil || page <= 0 {
+		page = 1
+	}
+	numberToFetch, err := urlParamToInt(r, "number")
+	if err != nil {
+		numberToFetch = 30
+	}
+
+	index := (page - 1) * numberToFetch
+
+	pp, total, err := s.productService.GetProducts(index, numberToFetch)
+	if err != nil {
+		s.response.ServerError(w, errors2.Wrap(err, op, "getting products from service"))
+		return
+	}
+
+	o := struct {
+		CurrentPage int `json:"current_page"`
+		NumberLoaded int `json:"number_loaded"`
+		TotalNumber int `json:"total_number"`
+		Products []*product.Product `json:"products"`
+	} {
+		CurrentPage: page,
+		NumberLoaded: len(pp),
+		TotalNumber: total,
+		Products: pp,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(o)
+}
+
+func (s server) productDetailHandler(w http.ResponseWriter, r *http.Request) {
+	const op = "server.productDetailHandler"
+
+	vars := mux.Vars(r)
+	pIdstr := vars["id"]
+	productId, err := strconv.Atoi(pIdstr)
+	if err != nil {
+		err = errors2.Wrap(err, op, "getting product id from URL")
+		s.response.ClientError(w, http.StatusNotFound, err)
+		return
+	}
+
+	var userId int
+	u, ok := r.Context().Value(user.ContextKeyUser).(*user.User)
+	if  !ok {
+		userId = 0
+	} else {
+		userId = u.ID
+	}
+
+	p, inCart, err := s.productService.GetProduct(productId, userId)
+	if err != nil {
+		switch errors2.Unwrap(err).(type) {
+		case *errors2.NotFound:
+			err = errors2.Wrap(err, op, "getting product from service")
+			s.response.ClientError(w, http.StatusNotFound, err)
+			return
+		default:
+			s.response.ServerError(w, errors2.Wrap(err, op, "getting product from service"))
+			return
+		}
+	}
+
+	o := struct {
+		Product *product.Product `json:"product"`
+		InCart bool `json:"in_cart"`
+	} {
+		Product: p,
+		InCart: inCart,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(o)
+}
+
+func urlParamToInt(r *http.Request, key string) (int, error){
+	paramMap := r.URL.Query()[key]
+	if len(paramMap) != 1 {
+		return 0, errors.New("param value is not 1")
+	}
+
+	value, err := strconv.Atoi(paramMap[0])
+	if err != nil {
+		return 0, err
+	}
+
+	return value, nil
+}
+
+func (s server) cartItemsHandler(w http.ResponseWriter, r *http.Request) {
+	const op = "server.cartItemsHandler"
+
+	u, ok := r.Context().Value(user.ContextKeyUser).(*user.User)
+	if  !ok {
+		s.response.ServerError(w, errors2.Wrap(errors.New(""), op, "getting user object from request context"))
+		return
+	}
+
+	pp, err := s.productService.GetCartItems(u.ID)
+	if err != nil {
+		s.response.ServerError(w, errors2.Wrap(err, op, "getting products from service"))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(pp)
+}
+
+func (s server) orderHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	const op = "server.orderHistoryHandler"
+
+	u, ok := r.Context().Value(user.ContextKeyUser).(*user.User)
+	if  !ok {
+		s.response.ServerError(w, errors2.Wrap(errors.New(""), op, "getting user object from request context"))
+		return
+	}
+
+	pp, err := s.productService.GetOrderProducts(u.ID)
+	if err != nil {
+		s.response.ServerError(w, errors2.Wrap(err, op, "getting products from service"))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(pp)
 }

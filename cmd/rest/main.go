@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/emeli-frank/pick_go/pkg/database"
+	"github.com/emeli-frank/pick_go/pkg/domain/product"
 	"github.com/emeli-frank/pick_go/pkg/domain/user"
 	http2 "github.com/emeli-frank/pick_go/pkg/http"
 	"github.com/emeli-frank/pick_go/pkg/storage/mysql"
@@ -42,7 +43,10 @@ func main() {
 	userRepo := mysql.NewUserStorage(db)
 	var userService = user.New(userRepo)
 
-	server := http2.NewServer(response, userService, infoLog)
+	productRepo := mysql.NewProductStorage(db)
+	productService := product.New(productRepo)
+
+	server := http2.NewServer(response, userService, productService, infoLog)
 
 	srv := &http.Server{
 		Addr: *addr,
