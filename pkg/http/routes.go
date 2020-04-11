@@ -32,6 +32,10 @@ func (s server) Routes() http.Handler {
 		Methods("POST")
 	r.Handle("/api/order-history", fooMiddleWare.Then(http.HandlerFunc(s.orderHistoryHandler)))
 
+	dir := "./static/images/products/"
+	r.PathPrefix("/images/products").
+		Handler(http.StripPrefix("/images/products/", http.FileServer(http.Dir(dir))))
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"}, // todo:: adjust before production
 		AllowedMethods: []string{"GET", "POST", "DELETE", "PUT"},

@@ -21,23 +21,23 @@ type application struct {
 }
 
 func main() {
-	dsn := flag.String("dsn", "pick:pick@/pick?parseTime=true&multiStatements=true", "MySQL database connection info")
+	dsn := flag.String("dsn", "pick:pick@/pick?parseTime=true&multiStatements=true",
+		"MySQL database connection info")
 	action := flag.String("action", "", "action")
 	scriptPath := flag.String("scriptPath", "./scripts", "Scripts path")
 	flag.Parse()
 
 	db, err := database.OpenDB(*dsn)
+	if err != nil {
+		fmt.Printf("database: An error occured, %s", err)
+	}
+	defer db.Close()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	productRepo := mysql.NewProductStorage(db)
 	productService := product.New(productRepo)
-
-	if err != nil {
-		fmt.Printf("database: An error occured, %s", err)
-	}
-	defer db.Close()
 
 	app := application{
 		errorLog:         errorLog,
@@ -48,9 +48,9 @@ func main() {
 
 	switch *action {
 	default :
-		fmt.Println("Creating tables and seeding core data")
+		fmt.Println("Creating tables and seeding data")
 		if err := app.seedCore(*scriptPath); err != nil {
-			app.errorLog.Fatal()
+			app.errorLog.Fatal(err)
 		}
 		fmt.Println("Done!")
 	}
@@ -61,7 +61,7 @@ func main() {
 }
 
 func (a application) seedCore(scriptPath string) error {
-	//scriptPath = "./pkg/storage/mysql/.db_setup"
+	scriptPath = "./pkg/storage/mysql/.db_setup"
 	scriptPaths := []string{
 		fmt.Sprintf("%s/teardown.sql", scriptPath),
 		fmt.Sprintf("%s/tables.sql", scriptPath),
@@ -73,10 +73,10 @@ func (a application) seedCore(scriptPath string) error {
 		return err
 	}
 
-	err = a.mock()
+	/*err = a.initDB()
 	if err != nil {
 		return err
-	}
+	}*/
 
 	err = a.mockProducts()
 	if err != nil {
@@ -86,7 +86,7 @@ func (a application) seedCore(scriptPath string) error {
 	return nil
 }
 
-func (a *application) mock() error {
+/*func (a *application) initDB() error {
 	var err error
 	err = database.ExecScripts(
 		a.DB,
@@ -98,7 +98,7 @@ func (a *application) mock() error {
 	}
 
 	return nil
-}
+}*/
 
 func (a *application) mockProducts() error {
 	price := faker.RandomInt(50, 500)
