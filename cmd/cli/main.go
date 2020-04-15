@@ -102,7 +102,7 @@ func (a application) seedCore(scriptPath string) error {
 
 func (a *application) mockProducts() error {
 	price := faker.RandomInt(50, 500)
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 300; i++ {
 		p := product.Product{
 			Name: faker.Commerce().ProductName(),
 			Description: faker.Lorem().Paragraph(5),

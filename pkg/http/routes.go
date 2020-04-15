@@ -24,7 +24,7 @@ func (s server) Routes() http.Handler {
 
 	r.Handle("/api/cart-items", fooMiddleWare.Then(http.HandlerFunc(s.saveProductToCartHandler))).
 		Methods("POST")
-	r.Handle("/api/cart-items", fooMiddleWare.Then(http.HandlerFunc(s.deleteProductFromCartHandler))).
+	r.Handle("/api/cart-items/{id}", fooMiddleWare.Then(http.HandlerFunc(s.deleteProductFromCartHandler))).
 		Methods("DELETE")
 	r.Handle("/api/cart-items", fooMiddleWare.Then(http.HandlerFunc(s.cartItemsHandler)))
 

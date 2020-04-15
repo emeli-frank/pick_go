@@ -337,16 +337,6 @@ func (s server) saveProductToCartHandler(w http.ResponseWriter, r *http.Request)
 
 func (s server) deleteProductFromCartHandler(w http.ResponseWriter, r *http.Request) {
 	op := "server.removeProductFromCartHandler"
-	data := struct {
-		ProductId int `json:"product_id"`
-	}{}
-
-	err := decodeJSONBody(w, r, &data)
-	if err != nil {
-		err = errors2.WrapWithMsg(err, op, "", "error decoding request body")
-		s.response.ClientError(w, http.StatusBadRequest, err)
-		return
-	}
 
 	u, ok := r.Context().Value(user.ContextKeyUser).(*user.User)
 	if  !ok {
@@ -354,7 +344,16 @@ func (s server) deleteProductFromCartHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = s.productService.DeleteProductFromCart(u.ID, data.ProductId)
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		s.response.ClientError(w, http.StatusBadRequest,
+			errors2.Wrap(errors.New("could not convert request id to string"),
+				op, "converting request id to int"))
+	}
+
+	err = s.productService.DeleteProductFromCart(u.ID, id)
 	if err != nil {
 		s.response.ServerError(w, err)
 		return

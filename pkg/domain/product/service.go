@@ -102,6 +102,9 @@ func (s *service) SaveToOrderHistory(userId int, productId int, time time.Time) 
 		return errors.Wrap(err, op, "calling repo to save products")
 	}
 
+	/* error ignored for now */
+	_ = s.DeleteProductFromCart(userId, productId)
+
 	return nil
 }
 
