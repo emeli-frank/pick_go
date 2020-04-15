@@ -301,7 +301,7 @@ func (s server) cartItemsHandler(w http.ResponseWriter, r *http.Request) {
 func (s server) saveProductToCartHandler(w http.ResponseWriter, r *http.Request) {
 	op := "server.saveProductToCartHandler"
 	data := struct {
-		ProductId int `json:"product_id"`
+		ProductIds []int `json:"product_ids"`
 	}{}
 
 	err := decodeJSONBody(w, r, &data)
@@ -317,7 +317,7 @@ func (s server) saveProductToCartHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = s.productService.SaveProductToCart(u.ID, data.ProductId)
+	err = s.productService.SaveProductToCart(u.ID, data.ProductIds)
 	if err != nil {
 		err = errors2.Wrap(err, op, "getting user and auth token from userService")
 		switch errors2.Unwrap(err).(type) {
@@ -353,7 +353,7 @@ func (s server) deleteProductFromCartHandler(w http.ResponseWriter, r *http.Requ
 				op, "converting request id to int"))
 	}
 
-	err = s.productService.DeleteProductFromCart(u.ID, id)
+	err = s.productService.DeleteProductFromCart(u.ID, []int{id})
 	if err != nil {
 		s.response.ServerError(w, err)
 		return
@@ -386,7 +386,7 @@ func (s server) orderHistoryHandler(w http.ResponseWriter, r *http.Request) {
 func (s server) saveToOrderHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	op := "server.saveProductToCartHandler"
 	data := struct {
-		ProductId int `json:"product_id"`
+		ProductIds []int `json:"product_ids"`
 	}{}
 
 	err := decodeJSONBody(w, r, &data)
@@ -402,7 +402,7 @@ func (s server) saveToOrderHistoryHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = s.productService.SaveToOrderHistory(u.ID, data.ProductId, time.Now())
+	err = s.productService.SaveToOrderHistory(u.ID, data.ProductIds, time.Now())
 	if err != nil {
 		err = errors2.Wrap(err, op, "getting user and auth token from userService")
 		switch errors2.Unwrap(err).(type) {

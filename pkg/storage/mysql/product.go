@@ -146,11 +146,27 @@ func (r *productStorage) GetCartItems(userId int) ([]*product.Product, error) {
 	return pp, nil
 }
 
-func (r *productStorage) SaveProductToCart(userId int, productId int) error {
+func (r *productStorage) SaveProductToCart(userId int, productIds []int) error {
 	const op = "productStorage.SaveProductToCart"
 
-	query := `INSERT INTO cart_items (user_id, product_id) VALUE (?, ?)`
-	result, err := r.DB.Exec(query, userId, productId)
+	query := "INSERT INTO cart_items (user_id, product_id) VALUES "
+	// dynamically build the rest of the query string
+	for k, _ := range productIds {
+		if k < (len(productIds) - 1) {
+			query += "(?, ?), "
+		} else {
+			query += "(?, ?)"
+		}
+	}
+
+	// dynamically generate params to map to placeholders in query string
+	var queryParams []interface{}
+	for _, productId := range productIds {
+		queryParams = append(queryParams, userId)
+		queryParams = append(queryParams, productId)
+	}
+
+	_, err := r.DB.Exec(query, queryParams...)
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			if mysqlErr.Number == 1062 {
@@ -161,30 +177,37 @@ func (r *productStorage) SaveProductToCart(userId int, productId int) error {
 		return errors2.Wrap(err, op, "inserting products")
 	}
 
-	_, err = result.LastInsertId()
-	if err != nil {
-		return errors2.Wrap(err, op, "getting last insert id")
-	}
-
 	return nil
 }
 
-func (r *productStorage) DeleteProductFromCart(userId int, productId int) error {
+func (r *productStorage) DeleteProductFromCart(userId int, productIds []int) error {
 	const op = "productStorage.DeleteProductFromCart"
 
-	query := `DELETE FROM cart_items WHERE user_id = ? AND product_id = ?`
-	result, err := r.DB.Exec(query, userId, productId)
+	query := "DELETE FROM cart_items WHERE user_id = ? AND product_id IN ("
+	for k, _ := range productIds {
+		if k < (len(productIds) - 1) {
+			query += "?, "
+		} else {
+			query += "?)"
+		}
+	}
+
+	fmt.Println(query)
+
+	var queryParams []interface{}
+	// append user id to query params first
+	queryParams = append(queryParams, userId)
+	// then append each product id to query params
+	for _, productId := range productIds {
+		queryParams = append(queryParams, productId)
+	}
+
+	fmt.Println(queryParams)
+
+	_, err := r.DB.Exec(query, queryParams...)
 	if err != nil {
 		return errors2.Wrap(err, op, "inserting products")
 	}
-
-	_, err = result.RowsAffected()
-	if err != nil {
-		return errors2.Wrap(err, op, "getting no. of rows affected")
-	} /*else if affected < 1 {
-		return errors2.Wrap(errors.New("row affected is less than 1"),
-			op, "row affected is less than 1")
-	}*/
 
 	return nil
 }
@@ -223,11 +246,28 @@ func (r *productStorage) GetOrderProducts(userId int) ([]*product.Product, error
 	return pp, nil
 }
 
-func (r *productStorage) SaveToOrderHistory(userId int, productId int, time time.Time) error {
+func (r *productStorage) SaveToOrderHistory(userId int, productIds []int, time time.Time) error {
 	const op = "productStorage.SaveProductToCart"
 
-	query := `INSERT INTO order_history (user_id, product_id, time_ordered) VALUE (?, ?, ?)`
-	result, err := r.DB.Exec(query, userId, productId, time)
+	query := "INSERT INTO order_history (user_id, product_id, time_ordered) VALUES "
+	// dynamically build the rest of the query string
+	for k, _ := range productIds {
+		if k < (len(productIds) - 1) {
+			query += "(?, ?, ?), "
+		} else {
+			query += "(?, ?, ?)"
+		}
+	}
+
+	// dynamically generate params to map to placeholders in query string
+	var queryParams []interface{}
+	for _, productId := range productIds {
+		queryParams = append(queryParams, userId)
+		queryParams = append(queryParams, productId)
+		queryParams = append(queryParams, time)
+	}
+
+	_, err := r.DB.Exec(query, queryParams...)
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			if mysqlErr.Number == 1062 {
@@ -236,11 +276,6 @@ func (r *productStorage) SaveToOrderHistory(userId int, productId int, time time
 			}
 		}
 		return errors2.Wrap(err, op, "inserting products")
-	}
-
-	_, err = result.LastInsertId()
-	if err != nil {
-		return errors2.Wrap(err, op, "getting last insert id")
 	}
 
 	return nil

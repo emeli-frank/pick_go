@@ -12,10 +12,10 @@ type repository interface {
 	GetCartItems(userId int) ([]*Product, error)
 	GetOrderProducts(userId int) ([]*Product, error)
 
-	SaveProductToCart(userId int, productId int) error
-	SaveToOrderHistory(userId int, productId int, time time.Time) error
+	SaveProductToCart(userId int, productIds []int) error
+	SaveToOrderHistory(userId int, productIds []int, time time.Time) error
 
-	DeleteProductFromCart(userId int, productId int) error
+	DeleteProductFromCart(userId int, productIds []int) error
 }
 
 func New(repo repository) *service {
@@ -72,10 +72,10 @@ func (s *service) GetCartItems(userId int) ([]*Product, error) {
 	return pp, nil
 }
 
-func (s *service) SaveProductToCart(userId int, productId int) error {
+func (s *service) SaveProductToCart(userId int, productIds []int) error {
 	const op = "productService.SaveProductToCart"
 
-	err := s.r.SaveProductToCart(userId, productId)
+	err := s.r.SaveProductToCart(userId, productIds)
 	if err != nil {
 		return errors.Wrap(err, op, "calling repo to save products")
 	}
@@ -94,24 +94,24 @@ func (s *service) GetOrderProducts(userId int) ([]*Product, error) {
 	return pp, nil
 }
 
-func (s *service) SaveToOrderHistory(userId int, productId int, time time.Time) error {
+func (s *service) SaveToOrderHistory(userId int, productIds []int, time time.Time) error {
 	const op = "productService.SaveProductToCart"
 
-	err := s.r.SaveToOrderHistory(userId, productId, time)
+	err := s.r.SaveToOrderHistory(userId, productIds, time)
 	if err != nil {
 		return errors.Wrap(err, op, "calling repo to save products")
 	}
 
 	/* error ignored for now */
-	_ = s.DeleteProductFromCart(userId, productId)
+	_ = s.DeleteProductFromCart(userId, productIds)
 
 	return nil
 }
 
-func (s *service) DeleteProductFromCart(userId int, productId int) error {
+func (s *service) DeleteProductFromCart(userId int, productIds []int) error {
 	const op = "DeleteProductFromCart.SaveProductToCart"
 
-	err := s.r.DeleteProductFromCart(userId, productId)
+	err := s.r.DeleteProductFromCart(userId, productIds)
 	if err != nil {
 		return errors.Wrap(err, op, "deleting product from repo")
 	}
