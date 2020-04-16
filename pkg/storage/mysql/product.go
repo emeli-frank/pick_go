@@ -146,27 +146,11 @@ func (r *productStorage) GetCartItems(userId int) ([]*product.Product, error) {
 	return pp, nil
 }
 
-func (r *productStorage) SaveProductToCart(userId int, productIds []int) error {
+func (r *productStorage) SaveProductToCart(userId int, productId int) error {
 	const op = "productStorage.SaveProductToCart"
 
-	query := "INSERT INTO cart_items (user_id, product_id) VALUES "
-	// dynamically build the rest of the query string
-	for k, _ := range productIds {
-		if k < (len(productIds) - 1) {
-			query += "(?, ?), "
-		} else {
-			query += "(?, ?)"
-		}
-	}
-
-	// dynamically generate params to map to placeholders in query string
-	var queryParams []interface{}
-	for _, productId := range productIds {
-		queryParams = append(queryParams, userId)
-		queryParams = append(queryParams, productId)
-	}
-
-	_, err := r.DB.Exec(query, queryParams...)
+	query := `INSERT INTO cart_items (user_id, product_id) VALUE (?, ?)`
+	result, err := r.DB.Exec(query, userId, productId)
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			if mysqlErr.Number == 1062 {
@@ -175,6 +159,11 @@ func (r *productStorage) SaveProductToCart(userId int, productIds []int) error {
 			}
 		}
 		return errors2.Wrap(err, op, "inserting products")
+	}
+
+	_, err = result.LastInsertId()
+	if err != nil {
+		return errors2.Wrap(err, op, "getting last insert id")
 	}
 
 	return nil

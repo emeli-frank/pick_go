@@ -12,7 +12,7 @@ type repository interface {
 	GetCartItems(userId int) ([]*Product, error)
 	GetOrderProducts(userId int) ([]*Product, error)
 
-	SaveProductToCart(userId int, productIds []int) error
+	SaveProductToCart(userId int, productId int) error
 	SaveToOrderHistory(userId int, productIds []int, time time.Time) error
 
 	DeleteProductFromCart(userId int, productIds []int) error
@@ -72,10 +72,10 @@ func (s *service) GetCartItems(userId int) ([]*Product, error) {
 	return pp, nil
 }
 
-func (s *service) SaveProductToCart(userId int, productIds []int) error {
+func (s *service) SaveProductToCart(userId int, productId int) error {
 	const op = "productService.SaveProductToCart"
 
-	err := s.r.SaveProductToCart(userId, productIds)
+	err := s.r.SaveProductToCart(userId, productId)
 	if err != nil {
 		return errors.Wrap(err, op, "calling repo to save products")
 	}

@@ -301,7 +301,7 @@ func (s server) cartItemsHandler(w http.ResponseWriter, r *http.Request) {
 func (s server) saveProductToCartHandler(w http.ResponseWriter, r *http.Request) {
 	op := "server.saveProductToCartHandler"
 	data := struct {
-		ProductIds []int `json:"product_ids"`
+		ProductId int `json:"product_id"`
 	}{}
 
 	err := decodeJSONBody(w, r, &data)
@@ -317,7 +317,7 @@ func (s server) saveProductToCartHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = s.productService.SaveProductToCart(u.ID, data.ProductIds)
+	err = s.productService.SaveProductToCart(u.ID, data.ProductId)
 	if err != nil {
 		err = errors2.Wrap(err, op, "getting user and auth token from userService")
 		switch errors2.Unwrap(err).(type) {
