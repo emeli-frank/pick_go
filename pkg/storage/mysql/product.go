@@ -201,14 +201,15 @@ func (r *productStorage) DeleteProductFromCart(userId int, productIds []int) err
 	return nil
 }
 
-func (r *productStorage) GetOrderProducts(userId int) ([]*product.Product, error) {
+func (r *productStorage) GetOrderProducts(userId int) (*product.OrderHistory, error) {
 	const op = "productStorage.GetCartItems"
 
-	query := `SELECT products.id, name, description, regular_price, discount_price, quantity
+	query := `SELECT products.id, name, description, regular_price, discount_price, 
+			quantity, order_history.time_ordered
 		FROM products
 		LEFT JOIN order_history
 			ON products.id = order_history.product_id
-		WHERE order_history.user_id = ?`
+		WHERE order_history.user_id = ? ORDER BY order_history.time_ordered DESC`
 
 	rows, err := r.DB.Query(query, userId)
 	if err != nil {
@@ -216,23 +217,27 @@ func (r *productStorage) GetOrderProducts(userId int) ([]*product.Product, error
 	}
 	defer rows.Close()
 
-	var pp = []*product.Product{}
+	oh := product.OrderHistory{}
 
 	for rows.Next() {
 		p := &product.Product{}
-		err = rows.Scan(&p.ID, &p.Name, &p.Description, &p.RegularPrice, &p.DiscountPrice, &p.Quantity)
+		t := time.Time{}
+		err = rows.Scan(&p.ID, &p.Name, &p.Description, &p.RegularPrice, &p.DiscountPrice, &p.Quantity, &t)
 		if err := rows.Err(); err != nil {
 			return nil, errors2.Wrap(err, op, "scanning product into struct")
 		}
 
-		pp = append(pp, p)
+		oh = append(oh, product.Order{
+			Product:     *p,
+			TimeOrdered: t,
+		})
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, errors2.Wrap(err, op, "getting products")
 	}
 
-	return pp, nil
+	return &oh, nil
 }
 
 func (r *productStorage) SaveToOrderHistory(userId int, productIds []int, time time.Time) error {

@@ -372,7 +372,7 @@ func (s server) orderHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pp, err := s.productService.GetOrderProducts(u.ID)
+	oh, err := s.productService.GetOrderProducts(u.ID)
 	if err != nil {
 		s.response.ServerError(w, errors2.Wrap(err, op, "getting products from service"))
 		return
@@ -380,7 +380,7 @@ func (s server) orderHistoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(pp)
+	_ = json.NewEncoder(w).Encode(oh)
 }
 
 func (s server) saveToOrderHistoryHandler(w http.ResponseWriter, r *http.Request) {

@@ -37,7 +37,6 @@ CREATE TABLE order_history (
     product_id INT UNSIGNED NOT NULL,
     time_ordered DATETIME NOT NULL,
 
-    UNIQUE KEY (user_id, product_id),
     FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE CASCADE,
